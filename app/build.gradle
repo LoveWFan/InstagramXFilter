@@ -8,24 +8,55 @@ android {
         applicationId "com.poney.instagramxfilter"
         minSdkVersion 18
         targetSdkVersion 29
-        versionCode 1
-        versionName "1.0"
+        versionCode 10001
+        versionName "1.0.1"
         ndk.abiFilters 'armeabi-v7a'/*,'arm64-v8a','x86','x86_64'*/
         externalNativeBuild {
             cmake { cppFlags "" }
         }
     }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    signingConfigs {
+        config {
+            keyAlias 'instagramxfilter'
+            keyPassword 'instagramxfilter'
+            def keystore = rootDir.toString() + File.separator + "keystore" + File.separator + "instagramxfilter.jks"
+            System.out.println("keystore : " + keystore)
+            storeFile file(keystore)
+            storePassword 'instagramxfilter'
         }
     }
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
+        }
+
+        debug {
+            signingConfig signingConfigs.config
+        }
+    }
+
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def outputFile = output.outputFile
+            def fileName = outputFile.getName()
+            if (outputFile != null && outputFile.name != null && outputFile.name.endsWith(".apk")) {
+                if (variant.buildType.name == 'release') {
+                    def versionName = variant.mergedFlavor.versionName
+                    fileName = "InstagramXFilter_release_v${versionName}.apk"
+                }
+                output.outputFileName = fileName
+            }
+        }
+    }
+
 }
 
 dependencies {
