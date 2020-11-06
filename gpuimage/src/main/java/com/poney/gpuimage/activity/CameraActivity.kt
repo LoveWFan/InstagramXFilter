@@ -3,7 +3,6 @@ package com.poney.gpuimage.activity
 import android.app.Activity
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
@@ -15,13 +14,19 @@ import com.poney.gpuimage.camera.Camera1Loader
 import com.poney.gpuimage.camera.Camera2Loader
 import com.poney.gpuimage.camera.CameraLoader
 import com.poney.gpuimage.camera.doOnLayout
-import com.poney.gpuimage.filter.base.*
+import com.poney.gpuimage.filter.base.FilterTypeList
+import com.poney.gpuimage.filter.base.GPUImageFilter
+import com.poney.gpuimage.filter.base.GPUImageParams
+import com.poney.gpuimage.filter.group.GPUImageAdjustFilterGroup
 import com.poney.gpuimage.filter.group.GPUImageFilterGroup
 import com.poney.gpuimage.utils.FilterTypeHelper
 import com.poney.gpuimage.utils.Rotation
 import com.poney.gpuimage.view.GPUImageView
+import java.util.*
 
 class CameraActivity : Activity(), View.OnClickListener {
+    private lateinit var gpuImageAdjustFilterGroup: GPUImageAdjustFilterGroup;
+    private var mCheckedId: Int = 0
     private val gpuImageView: GPUImageView by lazy { findViewById<GPUImageView>(R.id.gpu_image) }
     private val filterListView: RecyclerView by lazy { findViewById<RecyclerView>(R.id.filter_listView) }
     private val fragmentAdjustRadiogroup: RadioGroup by lazy { findViewById<RadioGroup>(R.id.fragment_adjust_radiogroup) }
@@ -38,7 +43,6 @@ class CameraActivity : Activity(), View.OnClickListener {
             Camera2Loader(this)
         }
     }
-    private var filterAdjuster: FilterAdjuster? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +57,8 @@ class CameraActivity : Activity(), View.OnClickListener {
         cameraLoader.setOnPreviewFrameListener { data: ByteArray?, width: Int?, height: Int? ->
             gpuImageView.updatePreviewFrame(data, width!!, height!!)
         }
-        gpuImageView.setRotation(getRotation(cameraLoader!!.getCameraOrientation()))
+        gpuImageView.filter = GPUImageFilterGroup(getFilterList(GPUImageFilter(), GPUImageAdjustFilterGroup()))
+        gpuImageView.setRotation(getRotation(cameraLoader.getCameraOrientation()))
         gpuImageView.setRenderMode(GPUImageView.RENDERMODE_CONTINUOUSLY)
     }
 
@@ -76,8 +81,11 @@ class CameraActivity : Activity(), View.OnClickListener {
     private fun switchFilterTo(filter: GPUImageFilter) {
         fragmentAdjustRadiogroup.clearCheck()
         val originalFilter = gpuImageView.filter
-        if (originalFilter == null || originalFilter.javaClass != filter.javaClass) {
-            gpuImageView.filter = filter
+        if (originalFilter is GPUImageFilterGroup) {
+            val gpuImageFilter = originalFilter.filters[0]
+            if (gpuImageFilter == null || gpuImageFilter.javaClass != filter.javaClass) {
+                gpuImageView.filter = GPUImageFilterGroup(getFilterList(filter, GPUImageAdjustFilterGroup()))
+            }
         }
     }
 
@@ -85,54 +93,69 @@ class CameraActivity : Activity(), View.OnClickListener {
         btnAdjust.setOnClickListener(this)
         btnFilter.setOnClickListener(this)
         fragmentAdjustRadiogroup.setOnCheckedChangeListener(RadioGroup.OnCheckedChangeListener { group, checkedId ->
-            seekBar.progress = 0
             if (checkedId == -1) {
                 seekBar.visibility = View.GONE
-                filterAdjuster = null
                 return@OnCheckedChangeListener
             }
-            seekBar.visibility = View.VISIBLE
-            val originalFilter = gpuImageView.filter
-            var gpuImageFilterGroup: GPUImageFilterGroup? = null
-            if (originalFilter is GPUImageFilterGroup) {
-                gpuImageFilterGroup = originalFilter
-            } else {
-                gpuImageFilterGroup = GPUImageFilterGroup()
-                gpuImageFilterGroup.addFilter(originalFilter)
-            }
-            var imageAdjustFilterBy: GPUImageFilter? = null
-            //image adjust filter
-            if (checkedId == R.id.fragment_radio_contrast) {
-                imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.CONTRAST)
-            } else if (checkedId == R.id.fragment_radio_saturation) {
-                imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.SATURATION)
-            } else if (checkedId == R.id.fragment_radio_exposure) {
-                imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.EXPOSURE)
-            } else if (checkedId == R.id.fragment_radio_sharpness) {
-                imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.SHARPEN)
-            } else if (checkedId == R.id.fragment_radio_bright) {
-                imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.BRIGHTNESS)
-            } else if (checkedId == R.id.fragment_radio_hue) {
-                imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.HUE)
-            }
-            gpuImageFilterGroup.addFilter(imageAdjustFilterBy)
-            if (filterAdjuster == null) filterAdjuster = FilterAdjuster(imageAdjustFilterBy)
-            gpuImageView.filter = gpuImageFilterGroup
-            gpuImageView.requestRender()
-            seekBar.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                    if (filterAdjuster!!.canAdjust()) {
-                        Log.w(GalleryActivity::class.java.simpleName, "onProgressChanged")
-                        filterAdjuster!!.adjust(progress)
-                    }
-                    gpuImageView.requestRender()
-                }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar) {}
-                override fun onStopTrackingTouch(seekBar: SeekBar) {}
-            })
+            seekBar.visibility = View.VISIBLE
+
+            val originalFilter = gpuImageView.filter
+            if (originalFilter is GPUImageFilterGroup) {
+                val filters = originalFilter.filters
+                gpuImageAdjustFilterGroup = filters[1] as GPUImageAdjustFilterGroup
+                mCheckedId = checkedId
+                if (checkedId == R.id.fragment_radio_contrast) {
+                    val contrastProgress: Int = gpuImageAdjustFilterGroup.getContrastProgress()
+                    seekBar.progress = contrastProgress
+                    gpuImageAdjustFilterGroup.setContrast(contrastProgress)
+                } else if (checkedId == R.id.fragment_radio_saturation) {
+                    val saturationProgress: Int = gpuImageAdjustFilterGroup.getSaturationProgress()
+                    seekBar.progress = saturationProgress
+                    gpuImageAdjustFilterGroup.setSaturation(saturationProgress)
+                } else if (checkedId == R.id.fragment_radio_exposure) {
+                    val exposureProgress: Int = gpuImageAdjustFilterGroup.getExposureProgress()
+                    seekBar.progress = exposureProgress
+                    gpuImageAdjustFilterGroup.setExposure(exposureProgress)
+                } else if (checkedId == R.id.fragment_radio_sharpness) {
+                    val sharpnessProgress: Int = gpuImageAdjustFilterGroup.getSharpnessProgress()
+                    seekBar.progress = sharpnessProgress
+                    gpuImageAdjustFilterGroup.setSharpness(sharpnessProgress)
+                } else if (checkedId == R.id.fragment_radio_bright) {
+                    val brightnessProgress: Int = gpuImageAdjustFilterGroup.getBrightnessProgress()
+                    seekBar.progress = brightnessProgress
+                    gpuImageAdjustFilterGroup.setBrightness(brightnessProgress)
+                } else if (checkedId == R.id.fragment_radio_hue) {
+                    val hueProgress: Int = gpuImageAdjustFilterGroup.getHueProgress()
+                    seekBar.progress = hueProgress
+                    gpuImageAdjustFilterGroup.setHue(hueProgress)
+                }
+            }
+
         })
 
+        seekBar.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                if (gpuImageAdjustFilterGroup == null) return
+                if (mCheckedId == R.id.fragment_radio_contrast) {
+                    gpuImageAdjustFilterGroup.setContrast(progress)
+                } else if (mCheckedId == R.id.fragment_radio_saturation) {
+                    gpuImageAdjustFilterGroup.setSaturation(progress)
+                } else if (mCheckedId == R.id.fragment_radio_exposure) {
+                    gpuImageAdjustFilterGroup.setExposure(progress)
+                } else if (mCheckedId == R.id.fragment_radio_sharpness) {
+                    gpuImageAdjustFilterGroup.setSharpness(progress)
+                } else if (mCheckedId == R.id.fragment_radio_bright) {
+                    gpuImageAdjustFilterGroup.setBrightness(progress)
+                } else if (mCheckedId == R.id.fragment_radio_hue) {
+                    gpuImageAdjustFilterGroup.setHue(progress)
+                }
+                gpuImageView.requestRender()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
         btnCamera.setOnClickListener {
             saveSnapshot()
         }
@@ -145,6 +168,13 @@ class CameraActivity : Activity(), View.OnClickListener {
                 gpuImageView.setRotation(getRotation(cameraLoader.getCameraOrientation()))
             }
         }
+    }
+
+    private fun getFilterList(originalFilter: GPUImageFilter?, gpuImageAdjustFilterGroup: GPUImageAdjustFilterGroup): MutableList<GPUImageFilter>? {
+        val groupFilters: MutableList<GPUImageFilter> = ArrayList(2)
+        groupFilters.add(originalFilter!!)
+        groupFilters.add(gpuImageAdjustFilterGroup)
+        return groupFilters
     }
 
     private fun saveSnapshot() {

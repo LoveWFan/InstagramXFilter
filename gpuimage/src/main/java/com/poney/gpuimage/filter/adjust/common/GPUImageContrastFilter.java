@@ -32,7 +32,7 @@ public class GPUImageContrastFilter extends GPUImageAdjustFilter {
     private float contrast;
 
     public GPUImageContrastFilter() {
-        this(1.2f);
+        this(1.0f);
     }
 
     public GPUImageContrastFilter(float contrast) {

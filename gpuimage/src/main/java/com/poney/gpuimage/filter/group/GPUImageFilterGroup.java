@@ -39,8 +39,8 @@ import static com.poney.gpuimage.view.GPUImageRenderer.CUBE;
  */
 public class GPUImageFilterGroup extends GPUImageFilter {
 
-    private List<GPUImageFilter> filters;
-    private List<GPUImageFilter> mergedFilters;
+    protected List<GPUImageFilter> filters;
+    protected List<GPUImageFilter> mergedFilters;
     private int[] frameBuffers;
     private int[] frameBufferTextures;
 

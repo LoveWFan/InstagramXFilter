@@ -368,22 +368,4 @@ public class FilterTypeHelper {
                 return new GPUImageFilter();
         }
     }
-
-    public static GPUImageFilter createImageAdjustFilterBy(GPUImageFilterType filterType) {
-        switch (filterType) {
-            case CONTRAST:
-                return new GPUImageContrastFilter();
-            case BRIGHTNESS:
-                return new GPUImageBrightnessFilter();
-            case SHARPEN:
-                return new GPUImageSharpenFilter();
-            case SATURATION:
-                return new GPUImageSaturationFilter();
-            case HUE:
-                return new GPUImageHueFilter();
-            case EXPOSURE:
-                return new GPUImageExposureFilter();
-        }
-        return new GPUImageFilter();
-    }
 }

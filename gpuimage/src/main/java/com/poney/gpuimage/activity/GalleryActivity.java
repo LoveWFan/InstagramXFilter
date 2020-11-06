@@ -17,14 +17,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.poney.gpuimage.R;
 import com.poney.gpuimage.R2;
 import com.poney.gpuimage.adapter.FilterAdapter;
-import com.poney.gpuimage.filter.base.FilterAdjuster;
 import com.poney.gpuimage.filter.base.FilterTypeList;
 import com.poney.gpuimage.filter.base.GPUImageFilter;
 import com.poney.gpuimage.filter.base.GPUImageFilterType;
 import com.poney.gpuimage.filter.base.GPUImageParams;
+import com.poney.gpuimage.filter.group.GPUImageAdjustFilterGroup;
 import com.poney.gpuimage.filter.group.GPUImageFilterGroup;
 import com.poney.gpuimage.utils.FilterTypeHelper;
+import com.poney.gpuimage.utils.OpenGlUtils;
 import com.poney.gpuimage.view.GPUImageView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -58,8 +62,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     RadioGroup fragmentAdjustRadiogroup;
     @BindView(R2.id.filter_adjust)
     LinearLayout filterAdjust;
-
-    private FilterAdjuster filterAdjuster;
+    private GPUImageAdjustFilterGroup gpuImageAdjustFilterGroup;
+    private int mCheckedId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,67 +83,91 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         fragmentAdjustRadiogroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                seekBar.setProgress(0);
+
                 if (checkedId == -1) {
                     seekBar.setVisibility(View.GONE);
-                    filterAdjuster = null;
                     return;
                 }
 
                 seekBar.setVisibility(View.VISIBLE);
+
                 GPUImageFilter originalFilter = gpuImageView.getFilter();
-                GPUImageFilterGroup gpuImageFilterGroup = null;
                 if (originalFilter instanceof GPUImageFilterGroup) {
-                    gpuImageFilterGroup = (GPUImageFilterGroup) originalFilter;
-                } else {
-                    gpuImageFilterGroup = new GPUImageFilterGroup();
-                    gpuImageFilterGroup.addFilter(originalFilter);
+                    GPUImageFilterGroup originalFilterGroup = (GPUImageFilterGroup) originalFilter;
+                    List<GPUImageFilter> filters = originalFilterGroup.getFilters();
+                    gpuImageAdjustFilterGroup = (GPUImageAdjustFilterGroup) filters.get(1);
+                    mCheckedId = checkedId;
+                    if (checkedId == R.id.fragment_radio_contrast) {
+                        int contrastProgress = gpuImageAdjustFilterGroup.getContrastProgress();
+                        seekBar.setProgress(contrastProgress);
+                        gpuImageAdjustFilterGroup.setContrast(contrastProgress);
+                    } else if (checkedId == R.id.fragment_radio_saturation) {
+                        int saturationProgress = gpuImageAdjustFilterGroup.getSaturationProgress();
+                        seekBar.setProgress(saturationProgress);
+                        gpuImageAdjustFilterGroup.setSaturation(saturationProgress);
+                    } else if (checkedId == R.id.fragment_radio_exposure) {
+                        int exposureProgress = gpuImageAdjustFilterGroup.getExposureProgress();
+                        seekBar.setProgress(exposureProgress);
+                        gpuImageAdjustFilterGroup.setExposure(exposureProgress);
+                    } else if (checkedId == R.id.fragment_radio_sharpness) {
+                        int sharpnessProgress = gpuImageAdjustFilterGroup.getSharpnessProgress();
+                        seekBar.setProgress(sharpnessProgress);
+                        gpuImageAdjustFilterGroup.setSharpness(sharpnessProgress);
+                    } else if (checkedId == R.id.fragment_radio_bright) {
+                        int brightnessProgress = gpuImageAdjustFilterGroup.getBrightnessProgress();
+                        seekBar.setProgress(brightnessProgress);
+                        gpuImageAdjustFilterGroup.setBrightness(brightnessProgress);
+                    } else if (checkedId == R.id.fragment_radio_hue) {
+                        int hueProgress = gpuImageAdjustFilterGroup.getHueProgress();
+                        seekBar.setProgress(hueProgress);
+                        gpuImageAdjustFilterGroup.setHue(hueProgress);
+                    }
+
                 }
-                GPUImageFilter imageAdjustFilterBy = null;
-                //image adjust filter
-                if (checkedId == R.id.fragment_radio_contrast) {
-                    imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.CONTRAST);
-                } else if (checkedId == R.id.fragment_radio_saturation) {
-                    imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.SATURATION);
-                } else if (checkedId == R.id.fragment_radio_exposure) {
-                    imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.EXPOSURE);
-                } else if (checkedId == R.id.fragment_radio_sharpness) {
-                    imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.SHARPEN);
-                } else if (checkedId == R.id.fragment_radio_bright) {
-                    imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.BRIGHTNESS);
-                } else if (checkedId == R.id.fragment_radio_hue) {
-                    imageAdjustFilterBy = FilterTypeHelper.createImageAdjustFilterBy(GPUImageFilterType.HUE);
-                }
 
-
-                gpuImageFilterGroup.addFilter(imageAdjustFilterBy);
-                if (filterAdjuster == null)
-                    filterAdjuster = new FilterAdjuster(imageAdjustFilterBy);
-                gpuImageView.setFilter(gpuImageFilterGroup);
-                gpuImageView.requestRender();
-                seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                    @Override
-                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                        if (filterAdjuster.canAdjust()) {
-                            Log.w(GalleryActivity.class.getSimpleName(), "onProgressChanged");
-                            filterAdjuster.adjust(progress);
-                        }
-                        gpuImageView.requestRender();
-                    }
-
-                    @Override
-                    public void onStartTrackingTouch(SeekBar seekBar) {
-
-                    }
-
-                    @Override
-                    public void onStopTrackingTouch(SeekBar seekBar) {
-
-                    }
-                });
 
             }
         });
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (gpuImageAdjustFilterGroup == null)
+                    return;
+                if (mCheckedId == R.id.fragment_radio_contrast) {
+                    gpuImageAdjustFilterGroup.setContrast(progress);
+                } else if (mCheckedId == R.id.fragment_radio_saturation) {
+                    gpuImageAdjustFilterGroup.setSaturation(progress);
+                } else if (mCheckedId == R.id.fragment_radio_exposure) {
+                    gpuImageAdjustFilterGroup.setExposure(progress);
+                } else if (mCheckedId == R.id.fragment_radio_sharpness) {
+                    gpuImageAdjustFilterGroup.setSharpness(progress);
+                } else if (mCheckedId == R.id.fragment_radio_bright) {
+                    gpuImageAdjustFilterGroup.setBrightness(progress);
+                } else if (mCheckedId == R.id.fragment_radio_hue) {
+                    gpuImageAdjustFilterGroup.setHue(progress);
+                }
+                gpuImageView.requestRender();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+    }
+
+
+    private List<GPUImageFilter> getFilterList(GPUImageFilter originalFilter, GPUImageAdjustFilterGroup gpuImageAdjustFilterGroup) {
+        List<GPUImageFilter> groupFilters = new ArrayList<>(2);
+        groupFilters.add(originalFilter);
+        groupFilters.add(gpuImageAdjustFilterGroup);
+        return groupFilters;
     }
 
     private void initFilterList() {
@@ -157,9 +185,14 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     private void switchFilterTo(GPUImageFilter filter) {
         fragmentAdjustRadiogroup.clearCheck();
         GPUImageFilter originalFilter = gpuImageView.getFilter();
-        if (originalFilter == null || originalFilter.getClass() != filter.getClass()) {
-            gpuImageView.setFilter(filter);
+        if (originalFilter instanceof GPUImageFilterGroup) {
+            GPUImageFilterGroup originalFilterGroup = (GPUImageFilterGroup) originalFilter;
+            GPUImageFilter gpuImageFilter = originalFilterGroup.getFilters().get(0);
+            if (gpuImageFilter == null || gpuImageFilter.getClass() != filter.getClass()) {
+                gpuImageView.setFilter(new GPUImageFilterGroup(getFilterList(filter, new GPUImageAdjustFilterGroup())));
+            }
         }
+
     }
 
 
@@ -174,6 +207,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         switch (requestCode) {
             case REQUEST_PICK_IMAGE: {
                 if (resultCode == RESULT_OK) {
+                    gpuImageView.setFilter(new GPUImageFilterGroup(getFilterList(new GPUImageFilter(), new GPUImageAdjustFilterGroup())));
                     gpuImageView.setImage(data.getData());
                 } else {
                     finish();

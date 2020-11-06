@@ -62,7 +62,7 @@ public class GPUImageHueFilter extends GPUImageAdjustFilter {
     private float hue;
 
     public GPUImageHueFilter() {
-        this(90.0f);
+        this(0.0f);
     }
 
     public GPUImageHueFilter(float hue) {

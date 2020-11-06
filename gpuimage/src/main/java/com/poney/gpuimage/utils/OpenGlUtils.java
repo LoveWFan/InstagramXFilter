@@ -216,4 +216,12 @@ public class OpenGlUtils {
         return body.toString();
     }
 
+    public static float range(int percentage, float start, float end) {
+        return (end - start) * percentage / 100.0f + start;
+    }
+
+    public static int range(int percentage, int start, int end) {
+        return (end - start) * percentage / 100 + start;
+    }
+
 }

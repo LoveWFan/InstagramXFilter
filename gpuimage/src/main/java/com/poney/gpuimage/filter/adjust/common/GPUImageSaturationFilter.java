@@ -33,7 +33,7 @@ public class GPUImageSaturationFilter extends GPUImageAdjustFilter {
     private float saturation;
 
     public GPUImageSaturationFilter() {
-        this(0.0f);
+        this(1.0f);
     }
 
     public GPUImageSaturationFilter(float saturation) {

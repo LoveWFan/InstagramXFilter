@@ -41,7 +41,7 @@ public class GPUImageExposureFilter extends GPUImageAdjustFilter {
     private float exposure;
 
     public GPUImageExposureFilter() {
-        this(1.0f);
+        this(0.0f);
     }
 
     public GPUImageExposureFilter(final float exposure) {
