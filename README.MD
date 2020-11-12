@@ -31,3 +31,11 @@
 **[Android OpenGL ES - 纹理](https://segmentfault.com/a/1190000037542097)**
 
 **[Android OpenGL ES - 反相、曝光、对比度、饱和度、色调滤镜](https://segmentfault.com/a/1190000037668990)**
+
+**[Android OpenGL ES - 卷积矩阵](https://segmentfault.com/a/1190000037749983)**
+
+## 参考
+该项目参考MagicCamera 以及 GPUImage 
+
+后续会增加更多的滤镜效果，欢迎提pr以及issue
+
