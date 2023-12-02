@@ -25,6 +25,9 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.button_camera)
     Button buttonCamera;
 
+    @BindView(R.id.button_effect)
+    Button buttonEffect;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,9 +39,9 @@ public class MainActivity extends AppCompatActivity {
     private void requestPermissions() {
         RxPermissions rxPermissions = new RxPermissions(this);
         Disposable disposable = rxPermissions.request(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.CAMERA)
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.CAMERA)
                 .subscribe(permission -> {
                     if (permission) {
                     } else {

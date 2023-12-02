@@ -32,5 +32,13 @@
             android:drawableTop="@android:drawable/ic_menu_camera"
             android:text="Camera"
             tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/button_effect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableTop="@android:drawable/ic_menu_gallery"
+            android:text="Effect"
+            tools:ignore="HardcodedText" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
