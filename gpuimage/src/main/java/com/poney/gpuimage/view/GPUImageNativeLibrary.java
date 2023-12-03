@@ -20,7 +20,7 @@ import android.graphics.Bitmap;
 
 public class GPUImageNativeLibrary {
     static {
-        System.loadLibrary("yuv-decoder");
+        System.loadLibrary("opengl-render");
     }
 
     public static native void YUVtoRBGA(byte[] yuv, int width, int height, int[] out);

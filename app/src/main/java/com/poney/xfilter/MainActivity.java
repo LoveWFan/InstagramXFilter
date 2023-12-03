@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.poney.gpuimage.activity.CameraActivity;
+import com.poney.gpuimage.activity.GLEffectActivity;
 import com.poney.gpuimage.activity.GalleryActivity;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    @OnClick({R.id.button_gallery, R.id.button_camera})
+    @OnClick({R.id.button_gallery, R.id.button_camera, R.id.button_effect})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.button_gallery:
@@ -58,6 +59,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.button_camera:
                 startActivity(new Intent(this, CameraActivity.class));
+                break;
+            case R.id.button_effect:
+                startActivity(new Intent(this, GLEffectActivity.class));
                 break;
         }
     }

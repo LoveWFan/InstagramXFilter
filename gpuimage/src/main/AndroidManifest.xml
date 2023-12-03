@@ -7,9 +7,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application>
-        <activity
-            android:name=".activity.GLEffectActivity"
-            android:exported="false" />
+        <activity android:name=".activity.GLEffectActivity" />
         <activity android:name=".activity.CameraActivity" />
         <activity android:name=".activity.GalleryActivity" />
     </application>
